@@ -25,6 +25,7 @@ class ReaTubeDl(QtWidgets.QWidget):
         color = QtWidgets.QColorDialog.getColor(self.color)
         if color.isValid():
             self.color = color
+            self.color_indicator.setStyleSheet(f'background-color: {self.color.name()}')
 
     def download(self):
         self.download_url = self.url_entry.text()
@@ -54,10 +55,17 @@ class ReaTubeDl(QtWidgets.QWidget):
         self.color_button = QtWidgets.QPushButton("Choose Color")
         self.download_button = QtWidgets.QPushButton("Download")
 
+        self.color_indicator = QtWidgets.QFrame()
+        self.color_indicator.setFixedSize(30, 30)  # Set the size of the color indicator
+        self.color_indicator.setStyleSheet(f'background-color: {self.color.name()}') # Set the initial color
+
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self.url_label)
         layout.addWidget(self.url_entry)
-        layout.addWidget(self.color_button)
+        color_layout = QtWidgets.QHBoxLayout()
+        color_layout.addWidget(self.color_button)
+        color_layout.addWidget(self.color_indicator)  # Add the color indicator to the layout
+        layout.addLayout(color_layout)
         layout.addWidget(self.download_button)
 
         self.setLayout(layout)

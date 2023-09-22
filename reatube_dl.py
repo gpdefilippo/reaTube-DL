@@ -5,18 +5,19 @@ Created on Thu Dec  1 22:29:43 2022
 
 @author: ginodefilippo
 """
+from __future__ import unicode_literals
 import os
 import sys
 from PyQt5 import QtWidgets, QtGui, QtCore
-import youtube_dl
+from yt_dlp import YoutubeDL
 import reaper_python as rp
 
 
 class ReaTubeDl(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
-        self.download_url = ""
-        self.save_dir = '~/Documents/Reaper/ReaTubeDl/'
+        self.download_url = 'https://www.youtube.com/watch?v=6JGKY1CX3V0'  # TEMP
+        self.save_dir = '/Users/ginodefilippo/Documents/REAPER/ReaTubeDl'
         self.color = QtGui.QColor("#5799db")
 
         self.setup_ui()
@@ -44,21 +45,21 @@ class ReaTubeDl(QtWidgets.QWidget):
         download_url(self.download_url, ydl_opts)
         self.close()
 
-    def close(self):
-        self.close()
-
     def setup_ui(self):
         self.setWindowTitle("ReaTubeDl")
 
-        self.url_label = QtWidgets.QLabel("Enter URL:")
+        # Define items to place in layout
+        self.url_label = QtWidgets.QLabel("Enter Youtube URL:")
         self.url_entry = QtWidgets.QLineEdit()
-        self.color_button = QtWidgets.QPushButton("Choose Color")
+        self.url_entry.setText(self.download_url)  # Temp along with filled in self.download_url
+        self.color_button = QtWidgets.QPushButton("Select Track Color:")
         self.download_button = QtWidgets.QPushButton("Download")
 
         self.color_indicator = QtWidgets.QFrame()
         self.color_indicator.setFixedSize(30, 30)  # Set the size of the color indicator
         self.color_indicator.setStyleSheet(f'background-color: {self.color.name()}') # Set the initial color
 
+        # Define layout with prior items
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self.url_label)
         layout.addWidget(self.url_entry)
@@ -72,7 +73,7 @@ class ReaTubeDl(QtWidgets.QWidget):
 
         self.color_button.clicked.connect(self.color_choose)
         self.download_button.clicked.connect(self.download)
-        self.url_entry.returnPressed.connect(self.download)
+        # self.url_entry.returnPressed.connect(self.download)
 
         self.show()
 
@@ -94,7 +95,7 @@ def my_hook(d):
 
 
 def download_url(url: str, ydl_opts: dict = None):
-    with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+    with YoutubeDL(ydl_opts) as ydl:
         ydl.download([url])
 
 

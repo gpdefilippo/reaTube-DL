@@ -10,14 +10,16 @@ import os
 import sys
 from PyQt5 import QtWidgets, QtGui, QtCore
 from yt_dlp import YoutubeDL
-import reaper_python as rp
+import reapy
 
 
 class ReaTubeDl(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
         self.download_url = 'https://www.youtube.com/watch?v=6JGKY1CX3V0'  # TEMP
-        self.save_dir = '/Users/ginodefilippo/Documents/REAPER/ReaTubeDl'
+        self.project = reapy.Project()  # Might leave this in the init to prevent user switching projects while running
+        self.save_dir = self.project.path
+        self.out_file = ''
         self.color = QtGui.QColor("#5799db")
 
         self.setup_ui()
@@ -27,6 +29,12 @@ class ReaTubeDl(QtWidgets.QWidget):
         if color.isValid():
             self.color = color
             self.color_indicator.setStyleSheet(f'background-color: {self.color.name()}')
+
+
+    def download_add_track(self):
+        self.download()
+        self.add_track()
+        self.close()
 
     def download(self):
         self.download_url = self.url_entry.text()
@@ -42,8 +50,10 @@ class ReaTubeDl(QtWidgets.QWidget):
             'logger': MyLogger(),
             'progress_hooks': [my_hook],
         }
-        download_url(self.download_url, ydl_opts)
-        self.close()
+        self.out_file = download_url(self.download_url, ydl_opts)
+
+    def add_track(self):
+        reapy.reascript_api.InsertMedia(self.out_file, 1)
 
     def setup_ui(self):
         self.setWindowTitle("ReaTubeDl")
@@ -72,7 +82,7 @@ class ReaTubeDl(QtWidgets.QWidget):
         self.setLayout(layout)
 
         self.color_button.clicked.connect(self.color_choose)
-        self.download_button.clicked.connect(self.download)
+        self.download_button.clicked.connect(self.download_add_track)
         # self.url_entry.returnPressed.connect(self.download)
 
         self.show()
@@ -96,8 +106,10 @@ def my_hook(d):
 
 def download_url(url: str, ydl_opts: dict = None):
     with YoutubeDL(ydl_opts) as ydl:
-        ydl.download([url])
+        info_dict = ydl.extract_info(url, download=True)
+        out_filename = ydl.prepare_filename(info_dict)
 
+        return out_filename
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)

@@ -36,9 +36,18 @@ class ReaTubeDl(QtWidgets.QMainWindow):
             self.color_indicator.setStyleSheet(f'background-color: {self.color.name()}')
 
     def download_add_track(self):
-        self.download()
+        try:
+            self.download_thread = DownloadThread(self)
+            self.download_thread.finished.connect(self.on_download_finished)
+            self.download_thread.start()
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(self, "Error", f"An error occurred: {str(e)}")
+        finally:
+            self.close()
+
+    def on_download_finished(self, out_file):
+        self.out_file = out_file
         self.add2track()
-        self.close()
 
     def download(self):
         QtCore.QCoreApplication.processEvents()
@@ -56,7 +65,7 @@ class ReaTubeDl(QtWidgets.QMainWindow):
             'logger': MyLogger(),
             'progress_hooks': [lambda d: my_hook(d, self.status_bar)],
         }
-        self.out_file = download_url(self.download_url, ydl_opts)
+        self.out_file = download(self.download_url, ydl_opts)
 
     def add2track(self):
         new_track = self.project.add_track(0, 'YoutubeTrack')
@@ -132,7 +141,20 @@ def my_hook(d, status_bar):
         status_bar.showMessage(f"Downloading: {progress}")
 
 
-def download_url(url: str, ydl_opts: dict = None):
+# Create a new class for handling the download in a separate thread
+class DownloadThread(QtCore.QThread):
+    finished = QtCore.pyqtSignal(str)
+
+    def __init__(self, parent):
+        super().__init__()
+        self.parent = parent
+
+    def run(self):
+        out_file = self.parent.download()
+        self.finished.emit(out_file)
+
+
+def download(url: str, ydl_opts: dict = None):
     with YoutubeDL(ydl_opts) as ydl:
         info_dict = ydl.extract_info(url, download=True)
         out_filename = ydl.prepare_filename(info_dict)

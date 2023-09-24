@@ -21,7 +21,7 @@ class ReaTubeDl(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
         self.audio_format = 'mp3'
-        self.download_url = 'https://www.youtube.com/watch?v=6JGKY1CX3V0'  # TEMP
+        self.download_url = ''
         self.project = reapy.Project()  # Might leave this in the init to prevent user switching projects while running
         self.save_dir = self.project.path
         self.out_file = ''

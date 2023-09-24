@@ -8,7 +8,7 @@ Created on Thu Dec  1 22:29:43 2022
 from __future__ import unicode_literals
 import os
 import sys
-from PyQt5 import QtWidgets, QtGui
+from PyQt5 import QtWidgets, QtGui, QtCore
 from yt_dlp import YoutubeDL
 import reapy
 
@@ -16,7 +16,7 @@ audio_formats_ext = {'aac': 'm4a', 'alac': 'm4a', 'flac': 'flac', 'm4a': 'm4a', 
                      'vorbis': 'ogg', 'wav': 'wav'}
 
 
-class ReaTubeDl(QtWidgets.QWidget):
+class ReaTubeDl(QtWidgets.QMainWindow):
 
     def __init__(self):
         super().__init__()
@@ -41,6 +41,7 @@ class ReaTubeDl(QtWidgets.QWidget):
         self.close()
 
     def download(self):
+        QtCore.QCoreApplication.processEvents()
         self.download_url = self.url_entry.text()
         self.audio_format = self.audio_format_dropdown.currentText()
         out_file = os.path.join(self.save_dir, '%(title)s.%(ext)s')
@@ -53,7 +54,7 @@ class ReaTubeDl(QtWidgets.QWidget):
                 'preferredquality': '192',
             }],
             'logger': MyLogger(),
-            'progress_hooks': [my_hook],
+            'progress_hooks': [lambda d: my_hook(d, self.status_bar)],
         }
         self.out_file = download_url(self.download_url, ydl_opts)
 
@@ -66,6 +67,12 @@ class ReaTubeDl(QtWidgets.QWidget):
 
     def setup_ui(self):
         self.setWindowTitle("ReaTubeDl")
+
+        central_widget = QtWidgets.QWidget()  # Create a central widget
+        self.setCentralWidget(central_widget)
+
+        self.status_bar = QtWidgets.QStatusBar()
+        self.setStatusBar(self.status_bar)
 
         # Define items to place in layout
         url_label = QtWidgets.QLabel("Enter Youtube URL:")
@@ -98,7 +105,7 @@ class ReaTubeDl(QtWidgets.QWidget):
         layout.addLayout(audio_format_layout)
         layout.addWidget(download_button)
 
-        self.setLayout(layout)
+        central_widget.setLayout(layout)
 
         color_button.clicked.connect(self.color_choose)
         download_button.clicked.connect(self.download_add_track)
@@ -117,9 +124,12 @@ class MyLogger:
         print(msg)
 
 
-def my_hook(d):
+def my_hook(d, status_bar):
     if d['status'] == 'finished':
-        print('Done downloading, now converting ...')
+        status_bar.showMessage("Download finished.")
+    elif d['status'] == 'downloading':
+        progress = d['_percent_str']
+        status_bar.showMessage(f"Downloading: {progress}")
 
 
 def download_url(url: str, ydl_opts: dict = None):
